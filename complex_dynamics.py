@@ -1,5 +1,6 @@
 import numpy as np
-from cmath import sin, cos, tan, sqrt
+from cmath import sin, cos, tan, sqrt, exp
+from math import e
 
 import matplotlib
 matplotlib.use('Agg')
@@ -22,8 +23,10 @@ spec = [('xrange'  , float64[:]  ),
 		('dpi'     , int32       ),
 		('lattice' , float64[:,:])]
 
-# I am aware that a single function can be used for each Mandelbrot/Julia type with an "update" function argument
-# however I was unable to get this to work with the @jitclass decorator, hence the clunky code
+# I am aware that a single function can be used for each Julia type with an "update" function argument
+# (that updates the value of z) however I was unable to get this to work with the @jitclass decorator, 
+# which I think is needed to make this not take forever, hence the clunky code.
+
 @jitclass(spec)
 class closure_fractal(object):
 	def __init__(self, xbound, ybound, width, height, dpi):
@@ -87,7 +90,7 @@ class closure_fractal(object):
 						break
 					z = z**power + c
 
-	def julia_cos(self, c, maxiter, horizon):
+	def julia_cos(self, c, maxiter, horizon, log_smooth):
 
 		xvals   = self.xvals
 		yvals   = self.yvals
@@ -102,11 +105,14 @@ class closure_fractal(object):
 				for n in xrange(maxiter):
 					az = abs(z)
 					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						if log_smooth:
+							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						else:
+							self.lattice[i,j] = n
 						break
 					z = c*cos(z)
 
-	def julia_sin(self, c, maxiter, horizon):
+	def julia_sin(self, c, maxiter, horizon, log_smooth):
 
 		xvals   = self.xvals
 		yvals   = self.yvals
@@ -121,7 +127,10 @@ class closure_fractal(object):
 				for n in xrange(maxiter):
 					az = abs(z)
 					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						if log_smooth:
+							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						else:
+							self.lattice[i,j] = n
 						break
 					z = c*sin(z)
 
@@ -160,8 +169,55 @@ class closure_fractal(object):
 					az = abs(z)
 					if az > horizon:
 						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						break
 					z = ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) ) * ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) )
+
+	def julia_nd_rational(self, c, maxiter, horizon, n, d):
+
+		xvals   = self.xvals
+		yvals   = self.yvals
+
+		log_horizon = np.log(np.log(horizon))/np.log(2)
+
+		for i in xrange(len(xvals)):
+			for j in xrange(len(yvals)):
+
+				z = xvals[i] + 1j * yvals[j]
+
+				if abs(z) == 0.0:
+					z = z + 0.1
+
+				for n in xrange(maxiter):
+					az = abs(z)
+					if az > horizon:
+						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						break
+					z = z**n + (c/z**d)
+
+	def cantor_bouquet(self, c, maxiter, horizon, log_smooth):
+
+		""" logarithmic smoothing gives infinite values, a good horizon value
+			to start with is 1.0E10
+		"""
+
+		xvals   = self.xvals
+		yvals   = self.yvals
+
+		log_horizon = np.log(np.log(horizon))/np.log(2)
+
+		for i in xrange(len(xvals)):
+			for j in xrange(len(yvals)):
+
+				z = xvals[i] + 1j * yvals[j]
+
+				for n in xrange(maxiter):
+					az = abs(z)
+					if az > horizon:
+						if log_smooth:
+							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						else:
+							self.lattice[i,j] = n
+						break
+					z = c * exp(z)
 
 def image(instance, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off', gamma=0.3, vert_exag=0, ls=[315,10]):
 
@@ -182,38 +238,35 @@ def image(instance, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off'
 
 	fig.savefig(filename + '.' + image_type, dpi=instance.dpi)
 
-c = -0.391 - 0.587j
-#c = 0.984808 + 0.173648j
-#jul=closure_fractal([-10,10],[-10,10],21,13,72)
-#jul.julia_sin(c, 1000, 2.0**40)
-#image(jul, cmap=plt.cm.hot, filename='julia', gamma=0.3, vert_exag=0)
-
-jul=closure_fractal([-0.2,0.2],[-0.2,0.2],21,13,72)
-jul.julia_mag1(c, 500, 2.0**40)
-image(jul, cmap=plt.cm.hot, filename='julia', gamma=0.3, vert_exag=0)
-
 #------------------------------------------------------------------------------#
 #                             Julia set c values                               #
 #------------------------------------------------------------------------------#
 
 ### quadratic ###
-# c = 1j              # dentrite fractal
-# c = -0.123 + 0.745j # douady's rabbit fractal
-# c = -0.750 + 0j     # San Marco fractal
-# c = -0.391 - 0.587j # Siegel disk fractal
-# c = -0.7 - 0.3j     # interesting 1
-# c = -0.75 - 0.2j    # interesting 2
-# c = -0.75 + 0.15j   # interesting 3
-# c = -0.7 + 0.35j    # interesting 4
+#c = 1j              # dentrite fractal
+#c = -0.123 + 0.745j # douady's rabbit fractal
+#c = -0.750 + 0j     # San Marco fractal
+#c = -0.391 - 0.587j # Siegel disk fractal
+#c = -0.7 - 0.3j     # interesting 1
+#c = -0.75 - 0.2j    # interesting 2
+#c = -0.75 + 0.15j   # interesting 3
+#c = -0.7 + 0.35j    # interesting 4
 
 ### cosine ###
-# c = 1.0 - 0.5j        
-# c = pi/2*(1.0 + 0.6j) 
-# c = pi/2*(1.0 + 0.4j) 
-# c = pi/2*(2.0 + 0.25j)
-# c = pi/2*(1.5 + 0.05j)
+#c = 1.0 - 0.5j        
+#c = pi/2*(1.0 + 0.6j) 
+#c = pi/2*(1.0 + 0.4j) 
+c = pi/2*(2.0 + 0.25j)
+#c = pi/2*(1.5 + 0.05j)
 
-#for i in [0.155, 0.156, 0.157, 0.158, 0.159, 0.160]:
-#	jul=closure_fractal([-1.0,0.1],[-0.1,0.1],21,13,72)
-#	jul.julia_sin(complex(-0.8,i), 2000, 2.0**40)
-#	image(jul, cmap=plt.cm.binary, filename='julia' + str(i), gamma=0.6, vert_exag=0.001)
+### mag1 ###
+#c = 1j
+
+### mag2 ###
+#c = 1.5 + 0.75j
+#c = 2.0 + 0.80j
+
+jul=closure_fractal([-0.5,0.5],[-0.5,0.5],21,13,300)
+jul.julia_cos(c, 5000, 2**40, False)
+image(jul, cmap=plt.cm.gnuplot2_r, filename='julia', gamma=0.25, vert_exag=0)
+
