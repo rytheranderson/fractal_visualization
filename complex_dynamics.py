@@ -1,230 +1,130 @@
 import numpy as np
 from cmath import sin, cos, tan, sqrt, exp
-from math import e
+from math import e, floor
 
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 from matplotlib import colors
+import matplotlib.animation as animation
 
-from numba import jit, jitclass
-from numba import float64, int32
+from numba import jit
 
 pi  = np.pi
 phi = (1 + 5 ** 0.5) / 2
 
-spec = [('xrange'  , float64[:]  ),
-		('yrange'  , float64[:]  ),
-		('width'   , int32       ), 
-		('height'  , int32       ),
-		('xvals'   , float64[:]  ),
-		('yvals'   , float64[:]  ),
-		('dpi'     , int32       ),
-		('lattice' , float64[:,:])]
+@jit
+def power(z, c, n=2):
+	return z**n + c
 
-# I am aware that a single function can be used for each Julia type with an "update" function argument
-# (that updates the value of z) however I was unable to get this to work with the @jitclass decorator, 
-# which I think is needed to make this not take forever, hence the clunky code.
+@jit
+def cosine(z, c, phase='cos'):
+	return c*cos(z)
 
-@jitclass(spec)
-class closure_fractal(object):
-	def __init__(self, xbound, ybound, width, height, dpi):
+@jit
+def sine(z, c, phase='sin'):
+	return c*sin(z)
 
-		xmin,xmax = [float(xbound[0]),float(xbound[1])]
-		ymin,ymax = [float(ybound[0]),float(ybound[1])]
+@jit
+def exponential(z, c, phase='cos_sin'):
+	return c*exp(z)
 
-		self.xrange = np.array([xmin,xmax], dtype=np.float64)
-		self.yrange = np.array([ymin,ymax], dtype=np.float64)
-		self.width  = width
-		self.height = height
+@jit
+def magnetic_1(z, c, dummy=''):
+	return ( (z*z+c-1) / (2*z+c-2) ) * ( (z*z+c-1) / (2*z+c-2) )
 
-		nx = width*dpi
-		ny = height*dpi
+@jit
+def magnetic_2(z, c, dummy=''):
+	return ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) ) * ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) )
 
-		xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float64)
-		yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float64)
+@jit
+def nd_rational(z, c, nd=(2,2)):
+	n,d = nd
+	return z**n + (c/z**d)
 
-		self.xvals = xvals
-		self.yvals = yvals
+@jit
+def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth, update_func, **kwargs):
 
-		self.dpi = dpi
-		self.lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
+	xmin,xmax = [float(xbound[0]),float(xbound[1])]
+	ymin,ymax = [float(ybound[0]),float(ybound[1])]
 
-	def mandelbrot_poly(self, maxiter, horizon, power):
+	nx = width*dpi
+	ny = height*dpi
 
-		xvals   = self.xvals
-		yvals   = self.yvals
+	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float64)
+	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float64)
 
-		log_horizon = np.log(np.log(horizon))/np.log(2)
+	lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
 
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
+	log_horizon = np.log(np.log(horizon))/np.log(2)
 
-				c = xvals[i] + 1j * yvals[j]
-				z = c
+	for i in xrange(len(xvals)):
+		for j in xrange(len(yvals)):
 
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						break
-					z = z**power + c
+			c = xvals[i] + 1j * yvals[j]
+			z = c
 
-	def julia_poly(self, c, maxiter, horizon, power):
+			for n in xrange(maxiter):
+				az = abs(z)
+				if az > horizon:
+					if log_smooth:
+						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+					else:
+						lattice[i,j] = n
+					break
+				z = update_func(z, c, kwargs)
 
-		xvals   = self.xvals
-		yvals   = self.yvals
+	return (lattice, width, height, dpi)
 
-		log_horizon = np.log(np.log(horizon))/np.log(2)
+@jit
+def julia(xbound, ybound, width, height, dpi, c, maxiter, horizon, log_smooth, update_func, **kwargs):
+	xmin,xmax = [float(xbound[0]),float(xbound[1])]
+	ymin,ymax = [float(ybound[0]),float(ybound[1])]
 
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
+	nx = width*dpi
+	ny = height*dpi
 
-				z = xvals[i] + 1j * yvals[j]
+	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float64)
+	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float64)
 
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						break
-					z = z**power + c
+	lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
 
-	def julia_cos(self, c, maxiter, horizon, log_smooth):
+	log_horizon = np.log(np.log(horizon))/np.log(2)
 
-		xvals   = self.xvals
-		yvals   = self.yvals
+	for i in xrange(len(xvals)):
+		for j in xrange(len(yvals)):
 
-		log_horizon = np.log(np.log(horizon))/np.log(2)
+			z = xvals[i] + 1j * yvals[j]
 
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
+			for n in xrange(maxiter):
+				az = abs(z)
+				if az > horizon:
+					if log_smooth:
+						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+					else:
+						lattice[i,j] = n
+					break
+				z = update_func(z, c, kwargs)
 
-				z = xvals[i] + 1j * yvals[j]
+	return (lattice, width, height, dpi)
 
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						if log_smooth:
-							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						else:
-							self.lattice[i,j] = n
-						break
-					z = c*cos(z)
+def julia_series(c_vals, xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth, uf_args):
 
-	def julia_sin(self, c, maxiter, horizon, log_smooth):
+	series = []
+	for c in c_vals:
+		l = julia(xbound, ybound, width, height, dpi, c, maxiter, horizon, log_smooth, uf_args[0], uf_args[1])
+		series.append(l)
 
-		xvals   = self.xvals
-		yvals   = self.yvals
+	return series
 
-		log_horizon = np.log(np.log(horizon))/np.log(2)
+def image(lattice, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off', gamma=0.3, vert_exag=0, ls=[315,10]):
 
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
-
-				z = xvals[i] + 1j * yvals[j]
-
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						if log_smooth:
-							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						else:
-							self.lattice[i,j] = n
-						break
-					z = c*sin(z)
-
-	def julia_mag1(self, c, maxiter, horizon):
-
-		xvals   = self.xvals
-		yvals   = self.yvals
-
-		log_horizon = np.log(np.log(horizon))/np.log(2)
-
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
-
-				z = xvals[i] + 1j * yvals[j]
-
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						break
-					z = ( (z*z+c-1) / (2*z+c-2) ) * ( (z*z+c-1) / (2*z+c-2) )
-
-	def julia_mag2(self, c, maxiter, horizon):
-
-		xvals   = self.xvals
-		yvals   = self.yvals
-
-		log_horizon = np.log(np.log(horizon))/np.log(2)
-
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
-
-				z = xvals[i] + 1j * yvals[j]
-
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-					z = ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) ) * ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) )
-
-	def julia_nd_rational(self, c, maxiter, horizon, n, d):
-
-		xvals   = self.xvals
-		yvals   = self.yvals
-
-		log_horizon = np.log(np.log(horizon))/np.log(2)
-
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
-
-				z = xvals[i] + 1j * yvals[j]
-
-				if abs(z) == 0.0:
-					z = z + 0.1
-
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						break
-					z = z**n + (c/z**d)
-
-	def cantor_bouquet(self, c, maxiter, horizon, log_smooth):
-
-		""" logarithmic smoothing gives infinite values, a good horizon value
-			to start with is 1.0E10
-		"""
-
-		xvals   = self.xvals
-		yvals   = self.yvals
-
-		log_horizon = np.log(np.log(horizon))/np.log(2)
-
-		for i in xrange(len(xvals)):
-			for j in xrange(len(yvals)):
-
-				z = xvals[i] + 1j * yvals[j]
-
-				for n in xrange(maxiter):
-					az = abs(z)
-					if az > horizon:
-						if log_smooth:
-							self.lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
-						else:
-							self.lattice[i,j] = n
-						break
-					z = c * exp(z)
-
-def image(instance, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off', gamma=0.3, vert_exag=0, ls=[315,10]):
-
-	A = instance.lattice.T
+	A, width, height, dpi = lattice
+	A = A.T
 
 	w,h = plt.figaspect(A)
-	fig, ax0 = plt.subplots(figsize=(w,h), dpi=instance.dpi)
+	fig, ax0 = plt.subplots(figsize=(w,h), dpi=dpi)
 	fig.subplots_adjust(0,0,1,1)
 	plt.axis(ticks)
 
@@ -234,13 +134,49 @@ def image(instance, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off'
 	ax0.imshow(M, origin='lower')
 
 	F = plt.gcf()
-	F.set_size_inches(instance.width, instance.height)
+	F.set_size_inches(width, height)
 
-	fig.savefig(filename + '.' + image_type, dpi=instance.dpi)
+	fig.savefig(filename + '.' + image_type, dpi=dpi)
+
+def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='off', gamma=0.3, vert_exag=0, ls=[315,10]):
+
+	Writer = animation.writers['ffmpeg']
+	writer = Writer(fps=fps, metadata=dict(artist='Me'), bitrate=bitrate)
+
+	norm = colors.PowerNorm(gamma)
+	light = colors.LightSource(azdeg=ls[0], altdeg=ls[1])
+
+	foo, width, height, dpi = series[0]
+	FIG = plt.figure()
+	F = plt.gcf()
+	F.set_size_inches(width, height)
+	plt.axis(ticks)
+	ims = []
+
+	for s in series:
+
+		A, width, height, dpi = s
+		A = A.T
+		M = light.shade(A, cmap=cmap, norm=norm, vert_exag=vert_exag, blend_mode='hsv')
+		im = plt.imshow(M, origin='lower', norm=norm)
+		ims.append([im])
+
+	ani = animation.ArtistAnimation(FIG, ims, interval=50, blit=True, repeat_delay=1000)
+	ani.save(filename + '.mp4', dpi=dpi)
+
+cvals = [complex(0,i) for i in np.linspace(0.01, 1, 100)]
+s=julia_series(cvals,[-1.5,1.5],[-1.5,1.5], 5, 5, 100, 100, 2**40, True, [power, (2)])
+animate(s, gamma=0.8, cmap=plt.cm.gnuplot2)
+
+
+#l=julia([-1.5,0.5],[-1.2,1.1], 5, 5, 100, 1j, 100, 2**40, True, cosine, (2))
+#image(l, cmap=plt.cm.gnuplot2, filename='mandelbrot', gamma=0.2)
 
 #------------------------------------------------------------------------------#
-#                             Julia set c values                               #
+#                                example sets                                  #
 #------------------------------------------------------------------------------#
+
+#----- Julia sets -----#
 
 ### quadratic ###
 #c = 1j              # dentrite fractal
@@ -256,17 +192,27 @@ def image(instance, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off'
 #c = 1.0 - 0.5j        
 #c = pi/2*(1.0 + 0.6j) 
 #c = pi/2*(1.0 + 0.4j) 
-c = pi/2*(2.0 + 0.25j)
+#c = pi/2*(2.0 + 0.25j)
 #c = pi/2*(1.5 + 0.05j)
 
 ### mag1 ###
-#c = 1j
+#c = 1.1j
 
 ### mag2 ###
 #c = 1.5 + 0.75j
 #c = 2.0 + 0.80j
 
-jul=closure_fractal([-0.5,0.5],[-0.5,0.5],21,13,300)
-jul.julia_cos(c, 5000, 2**40, False)
-image(jul, cmap=plt.cm.gnuplot2_r, filename='julia', gamma=0.25, vert_exag=0)
+### cantor bouquet ###
+#c = 1.0/e
+#c = 0.5/e
+#c = 5.0
+#c = 1.025/e
+#jul=closure_fractal([0,2],[-1,1],21,13,300)
+#jul.cantor_bouquet(c, 1000, 2**40, True)
+#image(jul, cmap=plt.cm.afmhot, filename='cantor_bouquet', gamma=0.9, vert_exag=0.0001)
+
+#----- Mandelbrot sets -----#
+
+
+
 
