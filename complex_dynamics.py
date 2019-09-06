@@ -78,7 +78,7 @@ def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth,
 	return (lattice, width, height, dpi)
 
 @jit
-def julia(xbound, ybound, width, height, dpi, c, maxiter, horizon, log_smooth, update_func, **kwargs):
+def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
 	ymin,ymax = [float(ybound[0]),float(ybound[1])]
 
@@ -105,15 +105,15 @@ def julia(xbound, ybound, width, height, dpi, c, maxiter, horizon, log_smooth, u
 					else:
 						lattice[i,j] = n
 					break
-				z = update_func(z, c, kwargs)
+				z = update_func(z, c, args)
 
 	return (lattice, width, height, dpi)
 
-def julia_series(c_vals, xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth, uf_args):
+def julia_series(c_vals, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 
 	series = []
 	for c in c_vals:
-		l = julia(xbound, ybound, width, height, dpi, c, maxiter, horizon, log_smooth, uf_args[0], uf_args[1])
+		l = julia(c, xbound, ybound, update_func, args=args, width=width, height=height, dpi=dpi, maxiter=maxiter, horizon=horizon, log_smooth=log_smooth)
 		series.append(l)
 
 	return series
@@ -164,17 +164,16 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 	ani = animation.ArtistAnimation(FIG, ims, interval=50, blit=True, repeat_delay=1000)
 	ani.save(filename + '.mp4', dpi=dpi)
 
-cvals = [complex(0,i) for i in np.linspace(0.01, 1, 100)]
-s=julia_series(cvals,[-1.5,1.5],[-1.5,1.5], 5, 5, 100, 100, 2**40, True, [power, (2)])
-animate(s, gamma=0.8, cmap=plt.cm.gnuplot2)
-
-
-#l=julia([-1.5,0.5],[-1.2,1.1], 5, 5, 100, 1j, 100, 2**40, True, cosine, (2))
-#image(l, cmap=plt.cm.gnuplot2, filename='mandelbrot', gamma=0.2)
 
 #------------------------------------------------------------------------------#
 #                                example sets                                  #
 #------------------------------------------------------------------------------#
+
+#----- animations -----#
+
+#cvals = np.array([complex(i,0) for i in np.linspace(0.1, 1.0, 10)])
+#s=julia_series(cvals,[-2,2],[-2,2], 5, 5, 100, 100, 2**40, False, [power, (2)])
+#animate(s, gamma=0.8, cmap=plt.cm.gnuplot2)
 
 #----- Julia sets -----#
 
@@ -207,9 +206,13 @@ animate(s, gamma=0.8, cmap=plt.cm.gnuplot2)
 #c = 0.5/e
 #c = 5.0
 #c = 1.025/e
-#jul=closure_fractal([0,2],[-1,1],21,13,300)
-#jul.cantor_bouquet(c, 1000, 2**40, True)
-#image(jul, cmap=plt.cm.afmhot, filename='cantor_bouquet', gamma=0.9, vert_exag=0.0001)
+
+#jul=julia(c, [-1,1],[-0.75,1.25], magnetic_2, args=2, width=21, height=13, dpi=70)
+#image(jul, cmap=plt.cm.gist_ncar, filename='cantor_bouquet', gamma=1.0, vert_exag=0.0)
+
+c_vals = np.array([complex(i,0.75) for i in np.linspace(0.05, 5.0, 1000)])
+s=julia_series(c_vals, [-1,1], [-0.75,1.25], magnetic_2, args=2, maxiter=1000)
+animate(s, gamma=0.9, cmap=plt.cm.gist_ncar)
 
 #----- Mandelbrot sets -----#
 
