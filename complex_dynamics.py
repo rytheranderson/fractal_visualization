@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors
 import matplotlib.animation as animation
 
-from numba import jit
+from numba import jit, prange
 
 pi  = np.pi
 phi = (1 + 5 ** 0.5) / 2
@@ -43,7 +43,7 @@ def nd_rational(z, c, nd=(2,2)):
 	n,d = nd
 	return z**n + (c/z**d)
 
-@jit
+@jit(nopython=True, parallel=True)
 def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth, update_func, **kwargs):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
@@ -59,26 +59,30 @@ def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth,
 
 	log_horizon = np.log(np.log(horizon))/np.log(2)
 
-	for i in xrange(len(xvals)):
-		for j in xrange(len(yvals)):
+	for i in prange(len(xvals)):
+		for j in prange(len(yvals)):
 
 			c = xvals[i] + 1j * yvals[j]
 			z = c
 
-			for n in xrange(maxiter):
+			for n in range(maxiter):
+
 				az = abs(z)
+
 				if az > horizon:
 					if log_smooth:
 						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
 					else:
 						lattice[i,j] = n
 					break
+
 				z = update_func(z, c, kwargs)
 
 	return (lattice, width, height, dpi)
 
-@jit
+@jit(nopython=True, parallel=True)
 def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
+
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
 	ymin,ymax = [float(ybound[0]),float(ybound[1])]
 
@@ -92,19 +96,22 @@ def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, ma
 
 	log_horizon = np.log(np.log(horizon))/np.log(2)
 
-	for i in xrange(len(xvals)):
-		for j in xrange(len(yvals)):
+	for i in prange(len(xvals)):
+		for j in prange(len(yvals)):
 
 			z = xvals[i] + 1j * yvals[j]
 
-			for n in xrange(maxiter):
+			for n in range(maxiter):
+
 				az = abs(z)
+
 				if az > horizon:
 					if log_smooth:
 						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
 					else:
 						lattice[i,j] = n
 					break
+
 				z = update_func(z, c, args)
 
 	return (lattice, width, height, dpi)
@@ -112,6 +119,7 @@ def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, ma
 def julia_series(c_vals, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 
 	series = []
+	
 	for c in c_vals:
 		l = julia(c, xbound, ybound, update_func, args=args, width=width, height=height, dpi=dpi, maxiter=maxiter, horizon=horizon, log_smooth=log_smooth)
 		series.append(l)
@@ -164,7 +172,6 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 	ani = animation.ArtistAnimation(FIG, ims, interval=50, blit=True, repeat_delay=1000)
 	ani.save(filename + '.mp4', dpi=dpi)
 
-
 #------------------------------------------------------------------------------#
 #                                example sets                                  #
 #------------------------------------------------------------------------------#
@@ -198,7 +205,7 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 #c = 1.1j
 
 ### mag2 ###
-#c = 1.5 + 0.75j
+c = 1.5 + 0.75j
 #c = 2.0 + 0.80j
 
 ### cantor bouquet ###
@@ -207,12 +214,12 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 #c = 5.0
 #c = 1.025/e
 
-#jul=julia(c, [-1,1],[-0.75,1.25], magnetic_2, args=2, width=21, height=13, dpi=70)
-#image(jul, cmap=plt.cm.gist_ncar, filename='cantor_bouquet', gamma=1.0, vert_exag=0.0)
+jul=julia(c, (-1,1), (-0.75,1.25), magnetic_2, args=2, width=21, height=13, dpi=300)
+image(jul, cmap=plt.cm.gist_ncar, filename='test', gamma=1.0, vert_exag=0.0)
 
-c_vals = np.array([complex(i,0.75) for i in np.linspace(0.05, 5.0, 1000)])
-s=julia_series(c_vals, [-1,1], [-0.75,1.25], magnetic_2, args=2, maxiter=1000)
-animate(s, gamma=0.9, cmap=plt.cm.gist_ncar)
+#c_vals = np.array([complex(i,0.75) for i in np.linspace(0.05, 5.0, 1000)])
+#s=julia_series(c_vals, [-1,1], [-0.75,1.25], magnetic_2, args=2, maxiter=1000)
+#animate(s, gamma=0.9, cmap=plt.cm.gist_ncar)
 
 #----- Mandelbrot sets -----#
 

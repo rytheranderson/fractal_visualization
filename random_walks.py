@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors
 
 class random_walk(object):
+	
 	def __init__(self, width, height, dpi):
 		self.lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
 		self.width   = width
