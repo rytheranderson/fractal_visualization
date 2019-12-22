@@ -44,7 +44,7 @@ def nd_rational(z, c, nd=(2,2)):
 	return z**n + (c/z**d)
 
 @jit(nopython=True, parallel=True)
-def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth, update_func, **kwargs):
+def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
 	ymin,ymax = [float(ybound[0]),float(ybound[1])]
@@ -52,8 +52,8 @@ def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth,
 	nx = width*dpi
 	ny = height*dpi
 
-	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float64)
-	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float64)
+	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float32)
+	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float32)
 
 	lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
 
@@ -65,7 +65,7 @@ def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth,
 			c = xvals[i] + 1j * yvals[j]
 			z = c
 
-			for n in range(maxiter):
+			for n in prange(maxiter):
 
 				az = abs(z)
 
@@ -76,7 +76,7 @@ def mandelbrot(xbound, ybound, width, height, dpi, maxiter, horizon, log_smooth,
 						lattice[i,j] = n
 					break
 
-				z = update_func(z, c, kwargs)
+				z = update_func(z, c, args)
 
 	return (lattice, width, height, dpi)
 
@@ -89,10 +89,10 @@ def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, ma
 	nx = width*dpi
 	ny = height*dpi
 
-	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float64)
-	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float64)
+	xvals  = np.array([xmin + i*(xmax - xmin)/(nx) for i in range(nx)], dtype=np.float32)
+	yvals  = np.array([ymin + i*(ymax - ymin)/(ny) for i in range(ny)], dtype=np.float32)
 
-	lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float64)
+	lattice = np.zeros((int(width*dpi), int(height*dpi)), dtype=np.float32)
 
 	log_horizon = np.log(np.log(horizon))/np.log(2)
 
@@ -171,58 +171,3 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 
 	ani = animation.ArtistAnimation(FIG, ims, interval=50, blit=True, repeat_delay=1000)
 	ani.save(filename + '.mp4', dpi=dpi)
-
-#------------------------------------------------------------------------------#
-#                                example sets                                  #
-#------------------------------------------------------------------------------#
-
-#----- animations -----#
-
-#cvals = np.array([complex(i,0) for i in np.linspace(0.1, 1.0, 10)])
-#s=julia_series(cvals,[-2,2],[-2,2], 5, 5, 100, 100, 2**40, False, [power, (2)])
-#animate(s, gamma=0.8, cmap=plt.cm.gnuplot2)
-
-#----- Julia sets -----#
-
-### quadratic ###
-#c = 1j              # dentrite fractal
-#c = -0.123 + 0.745j # douady's rabbit fractal
-#c = -0.750 + 0j     # San Marco fractal
-#c = -0.391 - 0.587j # Siegel disk fractal
-#c = -0.7 - 0.3j     # interesting 1
-#c = -0.75 - 0.2j    # interesting 2
-#c = -0.75 + 0.15j   # interesting 3
-#c = -0.7 + 0.35j    # interesting 4
-
-### cosine ###
-#c = 1.0 - 0.5j        
-#c = pi/2*(1.0 + 0.6j) 
-#c = pi/2*(1.0 + 0.4j) 
-#c = pi/2*(2.0 + 0.25j)
-#c = pi/2*(1.5 + 0.05j)
-
-### mag1 ###
-#c = 1.1j
-
-### mag2 ###
-c = 1.5 + 0.75j
-#c = 2.0 + 0.80j
-
-### cantor bouquet ###
-#c = 1.0/e
-#c = 0.5/e
-#c = 5.0
-#c = 1.025/e
-
-jul=julia(c, (-1,1), (-0.75,1.25), magnetic_2, args=2, width=21, height=13, dpi=300)
-image(jul, cmap=plt.cm.gist_ncar, filename='test', gamma=1.0, vert_exag=0.0)
-
-#c_vals = np.array([complex(i,0.75) for i in np.linspace(0.05, 5.0, 1000)])
-#s=julia_series(c_vals, [-1,1], [-0.75,1.25], magnetic_2, args=2, maxiter=1000)
-#animate(s, gamma=0.9, cmap=plt.cm.gist_ncar)
-
-#----- Mandelbrot sets -----#
-
-
-
-

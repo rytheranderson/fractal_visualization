@@ -129,11 +129,4 @@ class random_walk(object):
 
 		fig.savefig(filename + '.' + image_type)
 
-pm = random_walk(10,5,72)
-pm.lattice_walk_2D(100000, start=[0,0], static=True, udlr_weights=[1,1,1,1], diag_weights=[1,1,1,1])
-pm.lattice_walk_2D_image(color='temporal_distance' , cmap=plt.cm.gnuplot2)
-
-#pm.lattice_walk_2D_image(color='euclidean_distance', cmap='gnuplot2', udlr_weights=[1,1,1,1], diag_weights=[0,0,0,0])
-#pm.lattice_walk_2D_image(color='manhattan_distance', cmap='gnuplot2', polar=True)
-
 		
