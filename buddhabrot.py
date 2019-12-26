@@ -76,9 +76,9 @@ def compute_cvals(Ncvals, xbound, ybound, update_func, args=2, width=5, height=5
 	if importance_weight > 0.0:
 
 		NI = int(round(Ncvals * importance_weight))
-		energy_grid = mandelbrot(xbound, ybound, update_func, args=args, width=width, height=height, dpi=dpi, maxiter=1000, horizon=2.5)[0]
+		energy_grid = mandelbrot(xbound, ybound, update_func, args=args, width=width, height=height, dpi=dpi, maxiter=1000, horizon=2.5, log_smooth=False)[0]
 		energy_grid = (energy_grid/energy_grid.sum()) * NI
-		
+
 		for i in range(nx):
 			for j in range(ny):
 	
@@ -160,19 +160,19 @@ def open_image_array(file):
 
 start_time = time.time()
 
-xB = np.array([-1.50, 0.70])
-yB = np.array([-1.20, 1.20])
+xB = np.array([-2.85, 2.85])
+yB = np.array([-1.70, 1.70])
 
-cvals = compute_cvals(20000, xB, yB, power, args=2, width=4, height=4, dpi=100, importance_weight=0.90)
+cvals = compute_cvals(5000000, xB, yB, cosine, args=2, width=4, height=4, dpi=100, importance_weight=0.50)
 print(len(cvals))
 
-bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=4, height=4, dpi=100)
+bud0 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=100, width=4, height=3, dpi=100)
 save_image_array(bud0, name='save0')
 
-bud1 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=5000, width=4, height=4, dpi=100)
+bud1 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=1000, width=4, height=3, dpi=100)
 save_image_array(bud1, name='save1')
 
-bud2 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=50000, width=4, height=4, dpi=100)
+bud2 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=10000, width=4, height=3, dpi=100)
 save_image_array(bud2, name='save2')
 
 nebula_image(bud0, bud1, bud2, gamma=0.5)
