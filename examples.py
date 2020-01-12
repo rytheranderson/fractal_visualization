@@ -29,6 +29,18 @@ def mandelbrot_ex1():
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
+def mandelbrot_ex2():
+
+	xB = (-1.70, 0.75)
+	yB = (-1.25, 1.25)
+
+	start_time = time.time()
+
+	man = mandelbrot(xB, yB, nd_rational, args=(2,2), width=5, height=5, maxiter=100, dpi=300)
+	image(man, cmap=plt.cm.hot, filename='mandelbrot_ex1', gamma=0.3)
+
+	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
+
 #----- Julia images -----#
 
 def julia_ex0():
@@ -65,7 +77,7 @@ def cos_julia_ex():
 
 	start_time = time.time()
 
-	jul = julia(c, xB, yB, cosine, args='', width=5, height=5, maxiter=1000, dpi=300)
+	jul = julia(c, xB, yB, cosine, args=0, width=5, height=5, maxiter=1000, dpi=300)
 	image(jul, cmap=plt.cm.plasma, filename='cos_julia_ex', gamma=1.0)
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
@@ -78,7 +90,7 @@ def mag_julia_ex0():
 
 	start_time = time.time()
 
-	jul = julia(c, xB, yB, magnetic_1, args='', width=5, height=5, maxiter=1000, dpi=300)
+	jul = julia(c, xB, yB, magnetic_1, args=0, width=5, height=5, maxiter=1000, dpi=300)
 	image(jul, cmap=plt.cm.gist_ncar, filename='mag_julia_ex0', gamma=0.5)
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
@@ -91,7 +103,7 @@ def mag_julia_ex1():
 
 	start_time = time.time()
 
-	jul = julia(c, xB, yB, magnetic_2, args='', width=5, height=5, maxiter=1000, dpi=300)
+	jul = julia(c, xB, yB, magnetic_2, args=0, width=5, height=5, maxiter=1000, dpi=300)
 	image(jul, cmap=plt.cm.gist_ncar, filename='mag_julia_ex1', gamma=1.0)
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
@@ -129,7 +141,7 @@ def buddhabrot_ex():
 	xB = np.array([-1.50, -0.75])
 	yB = np.array([-0.70, 0.70])
 	
-	start_time = time.time()
+	start_time = timce.time()
 
 	cvals = compute_cvals(1000000, xB, yB, power, args=2, width=3, height=4, dpi=100)
 	bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=3, height=4, dpi=100)

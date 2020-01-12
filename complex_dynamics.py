@@ -15,33 +15,28 @@ pi  = np.pi
 phi = (1 + 5 ** 0.5) / 2
 
 @jit
-def power(z, c, n=2):
+def power(z, c, n):
 	return z**n + c
 
 @jit
-def cosine(z, c, phase='cos'):
+def cosine(z, c, args):
 	return c*cos(z)
 
 @jit
-def sine(z, c, phase='sin'):
+def sine(z, c, args):
 	return c*sin(z)
 
 @jit
-def exponential(z, c, phase='cos_sin'):
+def exponential(z, c, args):
 	return c*exp(z)
 
 @jit
-def magnetic_1(z, c, dummy=''):
+def magnetic_1(z, c, args):
 	return ( (z*z+c-1) / (2*z+c-2) ) * ( (z*z+c-1) / (2*z+c-2) )
 
 @jit
-def magnetic_2(z, c, dummy=''):
+def magnetic_2(z, c, args):
 	return ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) ) * ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) )
-
-@jit
-def nd_rational(z, c, nd=(2,2)):
-	n,d = nd
-	return z**n + (c/z**d)
 
 @jit(nopython=True, parallel=True)
 def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):

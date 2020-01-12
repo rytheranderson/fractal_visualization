@@ -158,29 +158,33 @@ def open_image_array(file):
 		A = pickle.load(f)
 		return A
 
-start_time = time.time()
+def run_nebula(xB, yB, Ncvals, update_func, args=2, importance_weight=0.5, width=5, height=5, dpi=100, maxiters=(100,1000,10000)):
+
+	start_time = time.time()
+	mi0, mi1, mi2 = maxiters
+	
+	cvals = compute_cvals(Ncvals, xB, yB, update_func, args=args, width=width, height=height, dpi=dpi, importance_weight=importance_weight)
+
+	bud0 = buddhabrot(xB, yB, cvals, update_func, args=args, horizon=1.0E6, maxiter=mi0, width=width, height=height, dpi=dpi)
+	save_image_array(bud0, name='save0')
+	
+	bud1 = buddhabrot(xB, yB, cvals, update_func, args=args, horizon=1.0E6, maxiter=mi1, width=width, height=height, dpi=dpi)
+	save_image_array(bud1, name='save1')
+	
+	bud2 = buddhabrot(xB, yB, cvals, update_func, args=args, horizon=1.0E6, maxiter=mi2, width=width, height=height, dpi=dpi)
+	save_image_array(bud2, name='save2')
+	
+	nebula_image(bud0, bud1, bud2, gamma=0.5)
+	
+	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
+
+### interesting regions
 
 xB = np.array([-2.85, 2.85])
 yB = np.array([-1.70, 1.70])
 
-cvals = compute_cvals(5000000, xB, yB, cosine, args=2, width=4, height=4, dpi=100, importance_weight=0.50)
-print(len(cvals))
-
-bud0 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=100, width=4, height=3, dpi=100)
-save_image_array(bud0, name='save0')
-
-bud1 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=1000, width=4, height=3, dpi=100)
-save_image_array(bud1, name='save1')
-
-bud2 = buddhabrot(xB, yB, cvals, cosine, args=2, horizon=1.0E6, maxiter=10000, width=4, height=3, dpi=100)
-save_image_array(bud2, name='save2')
-
-nebula_image(bud0, bud1, bud2, gamma=0.5)
-
-print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
-
-### interesting regions
 #xB = np.array([-1.35, -1.13])
 #yB = np.array([0.00,  0.20])
 
+#run_nebula(xB, yB, 50000, power, args=4)
 
