@@ -1,53 +1,10 @@
 import numpy as np
-from numpy.random import randint, random, choice
-from math import e, floor, ceil
+from numpy.random import random
 import time
-import sys
 import pickle
-
-import matplotlib
-matplotlib.use('Agg')
-
-from matplotlib import pyplot as plt
-from matplotlib import colors
-from matplotlib.colors import Normalize
-import matplotlib.animation as animation
-from skimage.restoration import denoise_nl_means, estimate_sigma
-
 from numba import jit, prange
 from complex_dynamics import *
-
-def nebula_image(AB, AG, AR, filename='f', image_type='png', ticks='off', gamma=1.0, denoise=False):
-
-	A_blue, width, height, dpi = AB
-	A_green = AG[0]
-	A_red = AR[0]
-
-	A_blue = A_blue.T
-	A_green = A_green.T
-	A_red = A_red.T
-
-	A_blue /= np.amax(A_blue)
-	A_green /= np.amax(A_green)
-	A_red /= np.amax(A_red)
-
-	w,h = plt.figaspect(A_blue)
-	fig, ax0 = plt.subplots(figsize=(w,h), dpi=dpi)
-	fig.subplots_adjust(0,0,1,1)
-	plt.axis(ticks)
-
-	M = np.dstack((A_red, A_green, A_blue))
-
-	if denoise:
-		sigma_est = np.mean(estimate_sigma(M, multichannel=True))
-		patch_kw = dict(patch_size=9, patch_distance=15, multichannel=True)
-		M = denoise_nl_means(M, h=0.9*sigma_est, fast_mode=True, **patch_kw)
-
-	ax0.imshow(M**gamma, origin='lower')
-	F = plt.gcf()
-	F.set_size_inches(width, height)
-
-	fig.savefig(filename + '.' + image_type, dpi=dpi)
+from image_creation import nebula_image
 
 @jit
 def compute_cvals(Ncvals, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, importance_weight=0.75):
@@ -158,7 +115,7 @@ def open_image_array(file):
 		A = pickle.load(f)
 		return A
 
-def run_nebula(xB, yB, Ncvals, update_func, args=2, importance_weight=0.5, width=5, height=5, dpi=100, maxiters=(100,1000,10000)):
+def run_nebula(xB, yB, Ncvals, update_func, gamma=0.5, args=2, importance_weight=0.5, width=5, height=5, dpi=100, maxiters=(100,1000,10000)):
 
 	start_time = time.time()
 	mi0, mi1, mi2 = maxiters
@@ -174,17 +131,7 @@ def run_nebula(xB, yB, Ncvals, update_func, args=2, importance_weight=0.5, width
 	bud2 = buddhabrot(xB, yB, cvals, update_func, args=args, horizon=1.0E6, maxiter=mi2, width=width, height=height, dpi=dpi)
 	save_image_array(bud2, name='save2')
 	
-	nebula_image(bud0, bud1, bud2, gamma=0.5)
+	nebula_image(bud0, bud1, bud2, gamma=gamma)
 	
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
-
-### interesting regions
-
-xB = np.array([-2.85, 2.85])
-yB = np.array([-1.70, 1.70])
-
-#xB = np.array([-1.35, -1.13])
-#yB = np.array([0.00,  0.20])
-
-#run_nebula(xB, yB, 50000, power, args=4)
 

@@ -1,7 +1,11 @@
+import numpy as np
 from complex_dynamics import *
 from random_walks import random_walk
 from buddhabrot import *
-import time
+import time 
+from image_creation import *
+
+pi = np.pi 
 
 #----- Mandelbrot images -----#
 
@@ -141,7 +145,7 @@ def buddhabrot_ex():
 	xB = np.array([-1.50, -0.75])
 	yB = np.array([-0.70, 0.70])
 	
-	start_time = timce.time()
+	start_time = time.time()
 
 	cvals = compute_cvals(1000000, xB, yB, power, args=2, width=3, height=4, dpi=100)
 	bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=3, height=4, dpi=100)
@@ -152,3 +156,35 @@ def buddhabrot_ex():
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
+if __name__ == '__main__':
+
+	def mandelbrot_ex1(cmap):
+
+		xB = ( 0.3602404434376143632361252444495 - 0.00000000000007,  0.3602404434376143632361252444495 + 0.00000000000023)
+		yB = (-0.6413130610648031748603750151793 - 0.00000000000008, -0.6413130610648031748603750151793 + 0.00000000000012)
+		
+		start_time = time.time()
+	
+		man = mandelbrot(xB, yB, power, args=2, width=24, height=16, maxiter=5000, dpi=300)
+		image(man, cmap=cmap, filename='M', gamma=0.9, image_type='tiff', vert_exag=0.1)
+	
+		print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
+
+	mymap = stack_cmaps(plt.cm.terrain, 20)
+	mandelbrot_ex1(mymap)
+
+#----- Cool Regions -----#
+### Interesting zoomed regions, aspect ratios are 3:2 width:height, can be easily adjusted
+### Mandelbrot
+
+# M1, use maxiter >= 10000, looks good with many colormaps
+# xB = (-0.775683769840 - 0.00000000015, -0.775683769840 + 0.00000000015)
+# yB = ( 0.136467358480 - 0.0000000001,  0.136467358480 + 0.0000000001)
+
+# M2, use maxiter >= 1000, should use stacked/cyclic colormaps
+# xB = ( 0.360240447 - 0.000000015,  0.360240447 + 0.000000015)
+# yB = (-0.641313060 - 0.000000010, -0.641313060 + 0.000000010)
+
+# M3, use maxiter >= 2000, should use stacked/cyclic colormaps
+# xB = ( 0.3602404434376143632361252444495 - 0.00000000000007,  0.3602404434376143632361252444495 + 0.00000000000023)
+# yB = (-0.6413130610648031748603750151793 - 0.00000000000008, -0.6413130610648031748603750151793 + 0.00000000000012)
