@@ -2,10 +2,10 @@ import numpy as np
 from numba import jit, prange
 from image_creation import *
 from matplotlib import pyplot as plt
-from numpy.random import shuffle
+import matplotlib.colors as mcolors
 
 @jit
-def lyapunov(string, xbound, ybound, maxiter=100, N_warmup=20, width=3, height=3, dpi=100):
+def lyapunov(string, xbound, ybound, maxiter=100, N_warmup=10, width=3, height=3, dpi=100):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
 	ymin,ymax = [float(ybound[0]),float(ybound[1])]
@@ -54,8 +54,16 @@ def lyapunov(string, xbound, ybound, maxiter=100, N_warmup=20, width=3, height=3
 
 	return (lattice, width, height, dpi)
 
-lyap_cmap = plt.get_cmap('nipy_spectral')    
-M = lyapunov('AB', (1.51,4), (1.51,4), maxiter=100, dpi=300)
-image(M, cmap=plt.cm.gist_ncar, gamma=3.0)
+
+
+colors0 = np.array(plt.cm.Blues(np.linspace(0, 1, 128)))
+colors1 = np.array(plt.cm.Greens_r(np.linspace(0, 1, 128)))	
+colors = np.vstack((colors1, colors0))
+
+mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+M = lyapunov('ABB', (2,4), (2,4), maxiter=50, dpi=500)
+markus_lyapunov_image(M, gammas=(1.0,5.0,0.5))
+#image(M, cmap=mymap, gamma=1.0)
 
 

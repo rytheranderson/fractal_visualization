@@ -96,3 +96,34 @@ def animate(series, fps=15, bitrate=1800, cmap=plt.cm.hot, filename='f', ticks='
 	ani = animation.ArtistAnimation(FIG, ims, interval=50, blit=True, repeat_delay=1000)
 	ani.save(filename + '.mp4', dpi=dpi)
 
+def markus_lyapunov_image(M, gammas=(1.0, 1.0, 1.0), ticks='off', filename='f', image_type='png'):
+
+	A, width, height, dpi = M
+	rg, gg, bg = gammas 
+	
+	red = np.zeros(A.shape) ** rg
+
+	green = np.zeros(A.shape) + A
+	green[green > 0.0] = 0.0
+	green[green < 0.0] -= np.amin(green)
+	green /= np.amax(green)
+	green = green ** gg
+
+	blue = np.zeros(A.shape) + A
+	blue[blue < 0.0] = 0.0
+	blue[blue > 0.0] -= np.amin(blue)
+	blue /= np.amax(blue)
+	blue = blue ** bg
+
+	w,h = plt.figaspect(blue)
+	fig, ax0 = plt.subplots(figsize=(width,height), dpi=dpi)
+	fig.subplots_adjust(0,0,1,1)
+	plt.axis(ticks)
+
+	M = np.dstack((red, green, blue))
+	ax0.imshow(M, origin='lower')
+	F = plt.gcf()
+	F.set_size_inches(width, height)
+
+	fig.savefig(filename + '.' + image_type, dpi=dpi)
+	
