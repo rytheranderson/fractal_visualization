@@ -6,13 +6,25 @@ from skimage.restoration import denoise_nl_means, estimate_sigma
 from matplotlib import colors
 import matplotlib.colors as mcolors
 import matplotlib.animation as animation
+import pickle
+
+def save_image_array(A, name='save'):
+
+	with open(name + '.pkl','wb') as f:
+		pickle.dump(A, f)
+
+def open_image_array(file):
+
+	with open(file,'rb') as f:
+		A = pickle.load(f)
+		return A
 
 def stack_cmaps(cmap, Nstacks):
 	
-	colors = np.array(cmap(np.linspace(0, 1, 100)))	
+	colors = np.array(cmap(np.linspace(0, 1, 200)))	
 	
 	for n in range(Nstacks - 1):
-		colors = np.vstack((colors, cmap(np.linspace(0, 1, 100))))
+		colors = np.vstack((colors, cmap(np.linspace(0, 1, 200))))
 
 	mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
@@ -121,9 +133,8 @@ def markus_lyapunov_image(M, gammas=(1.0, 1.0, 1.0), ticks='off', filename='f', 
 	plt.axis(ticks)
 
 	M = np.dstack((red, green, blue))
-	ax0.imshow(M, origin='lower')
+	ax0.imshow(M, origin='lower', vmin=0.0, vmax=1.0)
 	F = plt.gcf()
 	F.set_size_inches(width, height)
 
 	fig.savefig(filename + '.' + image_type, dpi=dpi)
-	

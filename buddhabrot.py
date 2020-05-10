@@ -4,7 +4,7 @@ import time
 import pickle
 from numba import jit, prange
 from complex_dynamics import *
-from image_creation import nebula_image
+from image_creation import nebula_image, save_image_array, open_image_array
 
 @jit
 def compute_cvals(Ncvals, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, importance_weight=0.75):
@@ -103,17 +103,6 @@ def buddhabrot(xbound, ybound, cvals, update_func, args=2, width=5, height=5, dp
 				lattice[indx,indy] += 1
 
 	return (lattice, width, height, dpi)
-
-def save_image_array(A, name='save'):
-
-	with open(name + '.pkl','wb') as f:
-		pickle.dump(A, f)
-
-def open_image_array(file):
-
-	with open(file,'rb') as f:
-		A = pickle.load(f)
-		return A
 
 def run_nebula(xB, yB, Ncvals, update_func, gamma=0.5, args=2, importance_weight=0.5, width=5, height=5, dpi=100, maxiters=(100,1000,10000)):
 

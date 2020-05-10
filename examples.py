@@ -125,17 +125,7 @@ def julia_animation_ex():
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
 #----- random walk -----#
-# this will take awhile, the code is not fast
-
-def random_walk_ex():
-
-	start_time = time.time()
-
-	rw = random_walk(5,5,300)
-	rw.lattice_walk_2D(10000000, start=[0,0], static=True, udlr_weights=[1,1,1,1], diag_weights=[1,1,1,1])
-	rw.lattice_walk_2D_image(color='temporal_distance', cmap=plt.cm.gist_gray, filename='random_walk_ex')
-
-	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
+# to add
 
 #----- buddhabrot -----#
 # this will take awhile
@@ -158,21 +148,8 @@ def buddhabrot_ex():
 
 if __name__ == '__main__':
 
-	def mandelbrot_ex1(cmap):
-
-		xB = ( 0.3602404434376143632361252444495 - 0.00000000000007,  0.3602404434376143632361252444495 + 0.00000000000023)
-		yB = (-0.6413130610648031748603750151793 - 0.00000000000008, -0.6413130610648031748603750151793 + 0.00000000000012)
-		
-		start_time = time.time()
+	pass
 	
-		man = mandelbrot(xB, yB, power, args=2, width=24, height=16, maxiter=5000, dpi=300)
-		image(man, cmap=cmap, filename='M', gamma=0.9, image_type='tiff', vert_exag=0.1)
-	
-		print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
-
-	mymap = stack_cmaps(plt.cm.terrain, 20)
-	mandelbrot_ex1(mymap)
-
 #----- Cool Regions -----#
 ### Interesting zoomed regions, aspect ratios are 3:2 width:height, can be easily adjusted
 ### Mandelbrot

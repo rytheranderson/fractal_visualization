@@ -5,7 +5,9 @@ from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 
 @jit
-def lyapunov(string, xbound, ybound, maxiter=100, N_warmup=10, width=3, height=3, dpi=100):
+def lyapunov(string, xbound, ybound, maxiter=100, width=3, height=3, dpi=100, transpose=False):
+
+	N_warmup = maxiter/3
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
 	ymin,ymax = [float(ybound[0]),float(ybound[1])]
@@ -47,23 +49,30 @@ def lyapunov(string, xbound, ybound, maxiter=100, N_warmup=10, width=3, height=3
 				count += 1
 
 				x = (rn*x) * (1-x)
+
 				lamd += np.log(np.abs(rn * (1 - (2*x))))
 
 			lamd /= maxiter
 			lattice[i,j] += lamd
 
+	if transpose:
+		lattice = lattice.T
+
 	return (lattice, width, height, dpi)
 
+if __name__ == '__main__':
 
+	colors0 = np.array(plt.cm.terrain(np.linspace(0, 1, 1000)))
+	colors1 = np.array(plt.cm.terrain_r(np.linspace(0, 1, 1000)))	
+	colors = np.vstack((colors1, colors0))
+	
+	mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
-colors0 = np.array(plt.cm.Blues(np.linspace(0, 1, 128)))
-colors1 = np.array(plt.cm.Greens_r(np.linspace(0, 1, 128)))	
-colors = np.vstack((colors1, colors0))
-
-mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-M = lyapunov('ABB', (2,4), (2,4), maxiter=50, dpi=500)
-markus_lyapunov_image(M, gammas=(1.0,5.0,0.5))
-#image(M, cmap=mymap, gamma=1.0)
-
-
+	#ABBBBABABBBBBB
+	#AABBBBBABABAAAAAA
+	
+	#M = lyapunov('AABBBBBABABAAAAAA', (2.01,4), (2.01, 4.0), maxiter=70, dpi=300, width=24, height=16)
+	#save_image_array(M)
+	
+	M = open_image_array('save.pkl')
+	image(M, cmap=plt.cm.flag, gamma=1.5, image_type='tiff', vert_exag=1000.0)
