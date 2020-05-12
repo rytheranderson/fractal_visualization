@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from skimage.restoration import denoise_nl_means, estimate_sigma
 from matplotlib import colors
+from numpy.ma import masked_where
 import matplotlib.colors as mcolors
 import matplotlib.animation as animation
 import pickle
@@ -42,8 +43,13 @@ def image(lattice, cmap=plt.cm.hot, filename='f', image_type='png', ticks='off',
 
 	norm = colors.PowerNorm(gamma)
 	light = colors.LightSource(azdeg=ls[0], altdeg=ls[1])
-	M = light.shade(A, cmap=cmap, norm=norm, vert_exag=vert_exag, blend_mode='hsv')
-	ax0.imshow(M, origin='lower')
+	
+	if vert_exag != 0.0:
+		M = light.shade(A, cmap=cmap, norm=norm, vert_exag=vert_exag, blend_mode='hsv')
+		ax0.imshow(M, origin='lower')
+	else: 
+		M = A
+		ax0.imshow(M, origin='lower', cmap=cmap, norm=norm)
 
 	F = plt.gcf()
 	F.set_size_inches(width, height)
@@ -138,3 +144,41 @@ def markus_lyapunov_image(M, gammas=(1.0, 1.0, 1.0), ticks='off', filename='f', 
 	F.set_size_inches(width, height)
 
 	fig.savefig(filename + '.' + image_type, dpi=dpi)
+
+def random_walk_3D_image(lattice, cmap=plt.cm.hot, single_color=False, filename='f', image_type='png', ticks='off', gamma=0.3, vert_exag=0, ls=[315,10], alpha_scale=1.0):
+
+	A, width, height, dpi = lattice
+
+	if single_color:
+		A[np.nonzero(A)] = 1.0
+
+	w,h = plt.figaspect(A[:,:,0])
+	fig, ax0 = plt.subplots(figsize=(w,h), dpi=dpi)
+	fig.subplots_adjust(0,0,1,1)
+	plt.axis(ticks)
+
+	max_ind = float(A.shape[-1] + 1)
+
+	for i in range(A.shape[-1]):
+		
+		IM = A[..., i]
+		IM = masked_where(IM == 0, IM)
+
+		alpha = 1 - (i + 1)/max_ind
+		alpha *= alpha_scale
+
+		norm = colors.PowerNorm(gamma)
+		light = colors.LightSource(azdeg=ls[0], altdeg=ls[1])
+
+		if vert_exag != 0.0:
+			M = light.shade(IM, cmap=cmap, vert_exag=vert_exag, blend_mode='overlay')
+			ax0.imshow(M, origin='lower', alpha=alpha, interpolation=None)
+		else: 
+			M = IM
+			ax0.imshow(M, origin='lower', alpha=alpha, cmap=cmap, norm=norm, interpolation=None)
+		
+	F = plt.gcf()
+	F.set_size_inches(width, height)
+		
+	fig.savefig(filename + '.' + image_type, dpi=dpi)
+
