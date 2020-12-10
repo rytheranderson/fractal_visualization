@@ -1,6 +1,6 @@
 import numpy as np
 from complex_dynamics import *
-from random_walks import random_walk
+from random_walks import random_walk_3D
 from buddhabrot import *
 import time 
 from image_creation import *
@@ -138,16 +138,23 @@ def buddhabrot_ex():
 	start_time = time.time()
 
 	cvals = compute_cvals(1000000, xB, yB, power, args=2, width=3, height=4, dpi=100)
+
 	bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=3, height=4, dpi=100)
+	save_image_array(bud0, name='save0')
+
 	bud1 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=1000, width=3, height=4, dpi=100)
+	save_image_array(bud1, name='save1')
+
 	bud2 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=10000, width=3, height=4, dpi=100)
+	save_image_array(bud2, name='save2')
 	
-	nebula_image(bud0, bud1, bud2, gammas=(0.35,0.4,0.4), filename='buddhabrot_ex')
+	nebula_image(bud0, bud1, bud2, gammas=0.4, filename='buddhabrot_ex')
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
 if __name__ == '__main__':
 
+	buddhabrot_ex()
 	pass
 	
 #----- Cool Regions -----#

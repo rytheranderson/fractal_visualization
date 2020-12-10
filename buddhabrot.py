@@ -124,3 +124,7 @@ def run_nebula(xB, yB, Ncvals, update_func, gamma=0.5, args=2, importance_weight
 	
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
+if __name__ == '__main__':
+
+	pass
+

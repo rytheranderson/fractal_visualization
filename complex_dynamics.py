@@ -111,3 +111,7 @@ def julia_series(c_vals, xbound, ybound, update_func, args=2, width=5, height=5,
 		series.append(l)
 
 	return series
+
+if __name__ == '__main__':
+
+	pass

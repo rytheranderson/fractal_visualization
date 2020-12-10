@@ -41,9 +41,14 @@ def random_walk_3D(moves, niter, width=5, height=5, depth=1, dpi=100, tracking='
 
 	return (lattice, width, height, dpi)
 
-basis = array([[1,0,0],[0,1,0],[0,0,1]])
-moves = construct_moves(basis)
-M = random_walk_3D(moves, 500000, width=4, height=3, depth=100, dpi=300, displacement=0.0, tracking='temporal', bias=1)
-random_walk_3D_image(M, cmap=plt.cm.binary_r, vert_exag=0, gamma=0.5, single_color=False)
+
+if __name__ == '__main__':
+
+	basis = array([[1,0,0],[0,1,0],[0,0,1]])
+	moves = construct_moves(basis)
+
+	#for i in range(20):
+	#	M = random_walk_3D(moves, 5000000, width=4, height=3, depth=1, dpi=300, displacement=0.0, tracking='temporal', bias=0)
+	#	random_walk_3D_image(M, filename=str(i), cmap=plt.cm.bone, gamma=0.75, single_color=False)
 
 		
