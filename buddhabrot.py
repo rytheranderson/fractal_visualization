@@ -1,10 +1,9 @@
 import numpy as np
 from numpy.random import random
 import time
-import pickle
-from numba import jit, prange
-from complex_dynamics import *
-from image_creation import nebula_image, save_image_array, open_image_array
+from numba import jit
+from complex_dynamics import mandelbrot
+from image_creation import nebula_image, save_image_array
 
 @jit
 def compute_cvals(Ncvals, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, importance_weight=0.75):
@@ -49,7 +48,7 @@ def compute_cvals(Ncvals, xbound, ybound, update_func, args=2, width=5, height=5
 
 	return np.array(cvals)
 
-@jit(nopython=True, parallel=True)
+@jit
 def buddhabrot(xbound, ybound, cvals, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=1.0E6):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]

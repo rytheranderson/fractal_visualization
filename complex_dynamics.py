@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import log, conj
 from cmath import sin, cos, exp
 from numba import jit, prange
 
@@ -8,6 +9,10 @@ phi = (1 + 5 ** 0.5) / 2
 @jit
 def power(z, c, n):
 	return z**n + c
+
+@jit
+def conj_power(z, c, n):
+	return conj(z)**n + c
 
 @jit
 def cosine(z, c, args):
@@ -29,7 +34,7 @@ def magnetic_1(z, c, args):
 def magnetic_2(z, c, args):
 	return ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) ) * ( (z*z*z * 3*(c-1)*z + (c-1)*(c-2) ) / ( 3*z*z + 3*(c-2)*z + (c-1)*(c-2) + 1) )
 
-@jit(nopython=True, parallel=True)
+@jit
 def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
@@ -43,7 +48,7 @@ def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, 
 
 	lattice = np.zeros((int(nx), int(ny)), dtype=np.float64)
 
-	log_horizon = np.log(np.log(horizon))/np.log(2)
+	log_horizon = log(log(horizon))/log(2)
 
 	for i in prange(len(xvals)):
 		for j in prange(len(yvals)):
@@ -57,7 +62,7 @@ def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, 
 
 				if az > horizon:
 					if log_smooth:
-						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						lattice[i,j] = n - log(log(az))/log(2) + log_horizon
 					else:
 						lattice[i,j] = n
 					break
@@ -66,7 +71,7 @@ def mandelbrot(xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, 
 
 	return (lattice, width, height, dpi)
 
-@jit(nopython=True, parallel=True)
+@jit
 def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, maxiter=100, horizon=2.0**40, log_smooth=True):
 
 	xmin,xmax = [float(xbound[0]),float(xbound[1])]
@@ -80,7 +85,7 @@ def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, ma
 
 	lattice = np.zeros((int(nx), int(ny)), dtype=np.float64)
 
-	log_horizon = np.log(np.log(horizon))/np.log(2)
+	log_horizon = log(log(horizon))/log(2)
 
 	for i in prange(len(xvals)):
 		for j in prange(len(yvals)):
@@ -93,7 +98,7 @@ def julia(c, xbound, ybound, update_func, args=2, width=5, height=5, dpi=100, ma
 
 				if az > horizon:
 					if log_smooth:
-						lattice[i,j] = n - np.log(np.log(az))/np.log(2) + log_horizon
+						lattice[i,j] = n - log(log(az))/log(2) + log_horizon
 					else:
 						lattice[i,j] = n
 					break

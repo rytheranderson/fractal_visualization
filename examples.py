@@ -1,9 +1,10 @@
 import numpy as np
-from complex_dynamics import *
-from random_walks import random_walk_3D
-from buddhabrot import *
 import time 
-from image_creation import *
+from matplotlib import pyplot as plt
+from complex_dynamics import mandelbrot, julia power, conj_power, sine, cosine, exponential, magnetic_1, magnetic_2
+from random_walks import random_walk_3D
+from buddhabrot import compute_cvals, buddhabrot
+from image_creation import image, save_image_array, open_image_array, nebula_image, random_walk_3D_image, stack_cmaps
 
 pi = np.pi 
 
@@ -40,8 +41,21 @@ def mandelbrot_ex2():
 
 	start_time = time.time()
 
-	man = mandelbrot(xB, yB, nd_rational, args=(2,2), width=5, height=5, maxiter=100, dpi=300)
+	man = mandelbrot(xB, yB, power, args=2, width=5, height=5, maxiter=100, dpi=300)
 	image(man, cmap=plt.cm.hot, filename='mandelbrot_ex1', gamma=0.3)
+
+	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
+
+def mandelbrot_ex3():
+
+	xB = ( 0.3602404434376143632361252444495 - 0.00000000000007,  0.3602404434376143632361252444495 + 0.00000000000023)
+	yB = (-0.6413130610648031748603750151793 - 0.00000000000008, -0.6413130610648031748603750151793 + 0.00000000000012)
+
+	start_time = time.time()
+	mymap = stack_cmaps(plt.cm.terrain, 5)
+
+	man = mandelbrot(xB, yB, power, args=2, width=5, height=5, maxiter=5000, dpi=300)
+	image(man, cmap=mymap, filename='mandelbrot_ex1', gamma=0.8)
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
@@ -132,43 +146,29 @@ def julia_animation_ex():
 
 def buddhabrot_ex():
 
-	xB = np.array([-1.50, -0.75])
-	yB = np.array([-0.70, 0.70])
+	xB = (-1.75, 0.85)
+	yB = (-1.10, 1.10)
 	
 	start_time = time.time()
 
-	cvals = compute_cvals(1000000, xB, yB, power, args=2, width=3, height=4, dpi=100)
+	cvals = compute_cvals(1000000, xB, yB, power, args=2, width=5, height=4, dpi=300)
 
-	bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=3, height=4, dpi=100)
+	bud0 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=100, width=5, height=4, dpi=300)
 	save_image_array(bud0, name='save0')
 
-	bud1 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=1000, width=3, height=4, dpi=100)
+	bud1 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=1000, width=5, height=4, dpi=300)
 	save_image_array(bud1, name='save1')
-
-	bud2 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=10000, width=3, height=4, dpi=100)
+	
+	bud2 = buddhabrot(xB, yB, cvals, power, args=2, horizon=1.0E6, maxiter=10000, width=5, height=4, dpi=300)
 	save_image_array(bud2, name='save2')
 	
-	nebula_image(bud0, bud1, bud2, gammas=0.4, filename='buddhabrot_ex')
+	nebula_image(bud0, bud1, bud2, gamma=0.4, filename='buddhabrot_ex', image_type='tiff')
 
 	print('calculation took %s seconds ' % np.round((time.time() - start_time), 3))
 
 if __name__ == '__main__':
 
-	buddhabrot_ex()
+	# add example function here
+
 	pass
 	
-#----- Cool Regions -----#
-### Interesting zoomed regions, aspect ratios are 3:2 width:height, can be easily adjusted
-### Mandelbrot
-
-# M1, use maxiter >= 10000, looks good with many colormaps
-# xB = (-0.775683769840 - 0.00000000015, -0.775683769840 + 0.00000000015)
-# yB = ( 0.136467358480 - 0.0000000001,  0.136467358480 + 0.0000000001)
-
-# M2, use maxiter >= 1000, should use stacked/cyclic colormaps
-# xB = ( 0.360240447 - 0.000000015,  0.360240447 + 0.000000015)
-# yB = (-0.641313060 - 0.000000010, -0.641313060 + 0.000000010)
-
-# M3, use maxiter >= 2000, should use stacked/cyclic colormaps
-# xB = ( 0.3602404434376143632361252444495 - 0.00000000000007,  0.3602404434376143632361252444495 + 0.00000000000023)
-# yB = (-0.6413130610648031748603750151793 - 0.00000000000008, -0.6413130610648031748603750151793 + 0.00000000000012)

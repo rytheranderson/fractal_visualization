@@ -68,26 +68,4 @@ if __name__ == '__main__':
 	
 	mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
-	# interesting strings + regions
-	# AABBBBBABABAAAAAA (2.0, 4.0) (2.0, 4.0)
-	# AAAABA (2.60, 4.0) (2.45, 4.0)
-	# AAB (2.5, 4.0) (2.5, 4.0)
-	# maxiter 10-100 + large vert_exag yields a "liquidy" image, increasing maxiter sharpens lines to a more "metallic" image for some regions 
-	# gamma > 1.0 tends to help for flat images (vert_exag=0) with 
-	# decreasing maxiter < 20 removes fuzzy regions, but makes color variation difficult
-
-	# M = lyapunov('AABBBBBABABAAAAAA', (2.00, 4.0), (2.00, 4.0), maxiter=200, dpi=600, width=3, height=2)
-	# save_image_array(M, name='AABBBBBABABAAAAAA')
- 
-	# M = lyapunov('AAAABA', (2.60, 4.0), (2.45, 4.0), maxiter=10, dpi=400, width=4, height=2)
-	# save_image_array(M, name='AAAABA')
- 
-	# M = lyapunov('AAB', (2.50, 4.0), (2.5, 4.0), maxiter=10, dpi=300, width=8, height=6)
-	# save_image_array(M, name='AAB')
-
-	# M = lyapunov('ABBAB', (2.0, 4.0), (2.0, 4.0), maxiter=70, dpi=600, width=12, height=8)
-	# save_image_array(M, name='ABBAB')
 	
-	# M = open_image_array('AAB.pkl')
-
-	# image(M, cmap=plt.cm.bone_r, gamma=0.5, image_type='tiff', vert_exag=0.01)
